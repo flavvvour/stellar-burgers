@@ -14,8 +14,11 @@ export const FeedUI: FC<FeedUIProps> = memo(({ orders, handleGetFeeds }) => (
       </h1>
       <RefreshButton
         text='Обновить'
-        onClick={handleGetFeeds}
-        extraClass={'ml-30'}
+        onClick={() => {
+          console.log('[DEBUG] Клик по кнопке "Обновить"');
+          handleGetFeeds();
+        }}
+        extraClass='ml-30'
       />
     </div>
     <div className={styles.main}>

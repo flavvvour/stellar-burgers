@@ -2,7 +2,6 @@ export function getCookie(name: string): string | undefined {
   const matches = document.cookie.match(
     new RegExp(
       '(?:^|; )' +
-        // eslint-disable-next-line no-useless-escape
         name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') +
         '=([^;]*)'
     )
@@ -15,6 +14,7 @@ export function setCookie(
   value: string,
   props: { [key: string]: string | number | Date | boolean } = {}
 ) {
+  console.log('[setCookie] name:', name, 'value:', value, 'props:', props);
   props = {
     path: '/',
     ...props

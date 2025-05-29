@@ -19,8 +19,11 @@ export const BurgerConstructorUI: FC<BurgerConstructorUIProps> = ({
   closeOrderModal
 }) => (
   <section className={styles.burger_constructor}>
-    {constructorItems.bun ? (
-      <div className={`${styles.element} mb-4 mr-4`}>
+    <div
+      className={`${styles.element} mb-4 mr-4`}
+      data-testid='constructor-bun-top'
+    >
+      {constructorItems.bun ? (
         <ConstructorElement
           type='top'
           isLocked
@@ -28,36 +31,35 @@ export const BurgerConstructorUI: FC<BurgerConstructorUIProps> = ({
           price={constructorItems.bun.price}
           thumbnail={constructorItems.bun.image}
         />
-      </div>
-    ) : (
-      <div
-        className={`${styles.noBuns} ${styles.noBunsTop} ml-8 mb-4 mr-5 text text_type_main-default`}
-      >
-        Выберите булки
-      </div>
-    )}
-    <ul className={styles.elements}>
-      {constructorItems.ingredients.length > 0 ? (
-        constructorItems.ingredients.map(
-          (item: TConstructorIngredient, index: number) => (
-            <BurgerConstructorElement
-              ingredient={item}
-              index={index}
-              totalItems={constructorItems.ingredients.length}
-              key={item.id}
-            />
-          )
-        )
       ) : (
-        <div
-          className={`${styles.noBuns} ml-8 mb-4 mr-5 text text_type_main-default`}
+        <span className='text text_type_main-default'>Выберите булки</span>
+      )}
+    </div>
+    <ul className={styles.elements} data-testid='constructor-main-ingredients'>
+      {constructorItems.ingredients.length === 0 && (
+        <li
+          className='text text_type_main-default ml-8 mb-4 mr-5'
+          data-testid='empty-constructor'
         >
           Выберите начинку
-        </div>
+        </li>
+      )}
+      {constructorItems.ingredients.map(
+        (item: TConstructorIngredient, index: number) => (
+          <BurgerConstructorElement
+            ingredient={item}
+            index={index}
+            totalItems={constructorItems.ingredients.length}
+            key={item.id}
+          />
+        )
       )}
     </ul>
-    {constructorItems.bun ? (
-      <div className={`${styles.element} mt-4 mr-4`}>
+    <div
+      className={`${styles.element} mt-4 mr-4`}
+      data-testid='constructor-bun-bottom'
+    >
+      {constructorItems.bun ? (
         <ConstructorElement
           type='bottom'
           isLocked
@@ -65,14 +67,10 @@ export const BurgerConstructorUI: FC<BurgerConstructorUIProps> = ({
           price={constructorItems.bun.price}
           thumbnail={constructorItems.bun.image}
         />
-      </div>
-    ) : (
-      <div
-        className={`${styles.noBuns} ${styles.noBunsBottom} ml-8 mb-4 mr-5 text text_type_main-default`}
-      >
-        Выберите булки
-      </div>
-    )}
+      ) : (
+        <span className='text text_type_main-default'>Выберите булки</span>
+      )}
+    </div>
     <div className={`${styles.total} mt-10 mr-4`}>
       <div className={`${styles.cost} mr-10`}>
         <p className={`text ${styles.text} mr-2`}>{price}</p>
@@ -86,13 +84,11 @@ export const BurgerConstructorUI: FC<BurgerConstructorUIProps> = ({
         onClick={onOrderClick}
       />
     </div>
-
     {orderRequest && (
-      <Modal onClose={closeOrderModal} title={'Оформляем заказ...'}>
+      <Modal onClose={closeOrderModal} title='Оформляем заказ...'>
         <Preloader />
       </Modal>
     )}
-
     {orderModalData && (
       <Modal
         onClose={closeOrderModal}
