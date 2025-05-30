@@ -39,14 +39,12 @@ export const DefaultIngredient: Story = {
       image_mobile: ''
     },
     count: 2,
-    locationState: {
-      background: {
-        hash: '',
-        key: 'eitkep27',
-        pathname: '/',
-        search: '',
-        state: null
-      }
+    backgroundLocation: {
+      hash: '',
+      key: 'eitkep27',
+      pathname: '/',
+      search: '',
+      state: null
     },
     handleAdd: () => {}
   }

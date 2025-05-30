@@ -32,3 +32,11 @@
 .content {
   text-align: left;
 }
+
+.textBlue {
+  color: #00cccc;
+}
+
+.textDefault {
+  color: #f2f2f3;
+}

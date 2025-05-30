@@ -23,23 +23,33 @@ export const BurgerIngredientsUI: FC<BurgerIngredientsUIProps> = memo(
       <section className={styles.burger_ingredients}>
         <nav>
           <ul className={styles.menu}>
-            <Tab value='bun' active={currentTab === 'bun'} onClick={onTabClick}>
-              Булки
-            </Tab>
-            <Tab
-              value='main'
-              active={currentTab === 'main'}
-              onClick={onTabClick}
-            >
-              Начинки
-            </Tab>
-            <Tab
-              value='sauce'
-              active={currentTab === 'sauce'}
-              onClick={onTabClick}
-            >
-              Соусы
-            </Tab>
+            <li>
+              <Tab
+                value='bun'
+                active={currentTab === 'bun'}
+                onClick={onTabClick}
+              >
+                Булки
+              </Tab>
+            </li>
+            <li>
+              <Tab
+                value='main'
+                active={currentTab === 'main'}
+                onClick={onTabClick}
+              >
+                Начинки
+              </Tab>
+            </li>
+            <li>
+              <Tab
+                value='sauce'
+                active={currentTab === 'sauce'}
+                onClick={onTabClick}
+              >
+                Соусы
+              </Tab>
+            </li>
           </ul>
         </nav>
         <div className={styles.content}>
