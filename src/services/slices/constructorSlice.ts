@@ -1,9 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { TIngredient } from '@utils-types';
+import { nanoid } from 'nanoid';
+import { TIngredient, TConstructorIngredient } from '@utils-types';
 
-type TConstructorState = {
-  bun: TIngredient | null;
-  ingredients: TIngredient[];
+export type TConstructorState = {
+  bun: TConstructorIngredient | null;
+  ingredients: TConstructorIngredient[];
 };
 
 const initialState: TConstructorState = {
@@ -16,10 +17,19 @@ const constructorSlice = createSlice({
   initialState,
   reducers: {
     addBun(state, action: PayloadAction<TIngredient>) {
-      state.bun = action.payload;
+      state.bun = {
+        ...action.payload,
+        id: nanoid(),
+        uniqueId: nanoid()
+      };
     },
     addIngredient(state, action: PayloadAction<TIngredient>) {
-      state.ingredients.push(action.payload);
+      const enriched: TConstructorIngredient = {
+        ...action.payload,
+        id: nanoid(),
+        uniqueId: nanoid()
+      };
+      state.ingredients.push(enriched);
     },
     removeIngredient(state, action: PayloadAction<number>) {
       state.ingredients.splice(action.payload, 1);
@@ -40,7 +50,6 @@ const constructorSlice = createSlice({
   }
 });
 
-// 👇 теперь экспортируются все нужные экшены
 export const {
   addBun,
   addIngredient,

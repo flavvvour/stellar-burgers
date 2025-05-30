@@ -15,8 +15,7 @@ export const ProtectedRoute = ({
   const location = useLocation();
 
   if (!isAuthChecked) {
-    console.log('Ждём авторизацию...');
-    return <p>Загрузка авторизации...</p>;
+    return <Preloader />;
   }
 
   if (onlyUnAuth && user) {
@@ -24,7 +23,7 @@ export const ProtectedRoute = ({
   }
 
   if (!onlyUnAuth && !user) {
-    return <Navigate to='/register' replace state={{ from: location }} />;
+    return <Navigate to='/login' replace state={{ from: location }} />;
   }
 
   return children || <Outlet />;

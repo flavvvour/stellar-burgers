@@ -6,6 +6,7 @@ import { createOrderThunk } from '../../services/slices/orderSlice';
 import { TIngredient } from '@utils-types';
 import { clearOrder } from '../../services/slices/orderSlice';
 import { clearConstructor } from '../../services/slices/constructorBurgerSlice';
+import { TConstructorIngredient } from '@utils-types';
 
 export const BurgerConstructor: FC = () => {
   const constructorItems = useAppSelector((state) => state.constructorBurger);
@@ -26,11 +27,16 @@ export const BurgerConstructor: FC = () => {
 
     const ingredientIds = [
       constructorItems.bun._id,
-      ...constructorItems.ingredients.map((item: TIngredient) => item._id),
+      ...constructorItems.ingredients.map((item) => item._id),
       constructorItems.bun._id
     ];
 
     await dispatch(createOrderThunk(ingredientIds));
+  };
+
+  const constructorItemsTyped = constructorItems as {
+    bun: TConstructorIngredient | null;
+    ingredients: TConstructorIngredient[];
   };
 
   const closeOrderModal = () => {
@@ -49,10 +55,23 @@ export const BurgerConstructor: FC = () => {
     <BurgerConstructorUI
       price={price}
       orderRequest={orderRequest}
-      constructorItems={constructorItems}
       orderModalData={orderModalData}
       onOrderClick={handleOrderClick}
       closeOrderModal={closeOrderModal}
+      constructorItems={{
+        bun: constructorItemsTyped.bun
+          ? {
+              ...constructorItemsTyped.bun,
+              id: constructorItemsTyped.bun.id ?? '',
+              uniqueId: constructorItemsTyped.bun.uniqueId ?? ''
+            }
+          : null,
+        ingredients: constructorItemsTyped.ingredients.map((item) => ({
+          ...item,
+          id: item.id ?? '',
+          uniqueId: item.uniqueId ?? ''
+        }))
+      }}
     />
   );
 };

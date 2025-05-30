@@ -1,4 +1,9 @@
-import { checkAuth, loginUser, logoutUser } from '../slices/authSlice';
+import {
+  checkAuth,
+  loginUser,
+  logoutUser,
+  registerUser
+} from '../slices/authSlice';
 import { setCookie, deleteCookie } from '../../utils/cookie';
 import { getUserApi, loginUserApi, logoutApi } from '../../utils/burger-api';
 import { TUser } from '../../utils/types';
@@ -64,10 +69,12 @@ it('handles loginUser.rejected', () => {
 });
 
 describe('authSlice reducer (extraReducers)', () => {
+  const errorMessage = 'Ошибка теста';
   it('handles logoutUser.fulfilled', () => {
     const prevState = {
       user: { name: 'Someone', email: 'some@some.com' },
-      isAuthChecked: false
+      isAuthChecked: false,
+      error: null
     };
 
     const newState = authReducer(prevState, {
@@ -76,12 +83,159 @@ describe('authSlice reducer (extraReducers)', () => {
     expect(newState.user).toBe(null);
     expect(newState.isAuthChecked).toBe(true);
   });
+  it('устанавливает ошибку при loginUser.rejected', () => {
+    const errorMessage = 'Неверный логин';
+    const newState = authReducer(undefined, {
+      type: loginUser.rejected.type,
+      payload: errorMessage
+    });
+    expect(newState.error).toBe(errorMessage);
+  });
+
+  it('устанавливает ошибку при registerUser.rejected', () => {
+    const errorMessage = 'Email уже занят';
+    const newState = authReducer(undefined, {
+      type: 'auth/registerUser/rejected',
+      payload: errorMessage
+    });
+    expect(newState.error).toBe(errorMessage);
+  });
+
+  it('устанавливает ошибку при logoutUser.rejected', () => {
+    const errorMessage = 'Ошибка при выходе';
+    const newState = authReducer(undefined, {
+      type: logoutUser.rejected.type,
+      payload: errorMessage
+    });
+    expect(newState.error).toBe(errorMessage);
+  });
+  it('устанавливает ошибку при loginUser.rejected', () => {
+    const prevState = {
+      user: null,
+      isAuthChecked: false,
+      error: null
+    };
+
+    const action = {
+      type: loginUser.rejected.type,
+      payload: errorMessage
+    };
+
+    const newState = authReducer(prevState, action);
+    expect(newState.user).toBe(null);
+    expect(newState.isAuthChecked).toBe(true);
+    expect(newState.error).toBe(errorMessage);
+  });
+
+  it('устанавливает ошибку при registerUser.rejected', () => {
+    const prevState = {
+      user: null,
+      isAuthChecked: false,
+      error: null
+    };
+
+    const action = {
+      type: registerUser.rejected.type,
+      payload: errorMessage
+    };
+
+    const newState = authReducer(prevState, action);
+    expect(newState.user).toBe(null);
+    expect(newState.isAuthChecked).toBe(true);
+    expect(newState.error).toBe(errorMessage);
+  });
+
+  it('устанавливает ошибку при logoutUser.rejected', () => {
+    const prevState = {
+      user: { name: 'Somebody', email: 'some@mail.com' },
+      isAuthChecked: true,
+      error: null
+    };
+
+    const action = {
+      type: logoutUser.rejected.type,
+      payload: errorMessage
+    };
+
+    const newState = authReducer(prevState, action);
+    expect(newState.user).toBe(null);
+    expect(newState.isAuthChecked).toBe(true);
+    expect(newState.error).toBe(errorMessage);
+  });
+  it('обрабатывает registerUser.fulfilled', () => {
+    const prevState = {
+      user: null,
+      isAuthChecked: false,
+      error: null
+    };
+
+    const action = {
+      type: registerUser.fulfilled.type,
+      payload: mockUser
+    };
+
+    const newState = authReducer(prevState, action);
+    expect(newState.user).toEqual(mockUser);
+    expect(newState.isAuthChecked).toBe(true);
+  });
+  it('registerUser success', async () => {
+    const registerUserApiMock =
+      require('../../utils/burger-api').registerUserApi;
+    registerUserApiMock.mockResolvedValue({
+      accessToken: 'Bearer testtoken',
+      refreshToken: 'refreshtoken',
+      user: mockUser
+    });
+
+    Object.defineProperty(global, 'localStorage', {
+      value: {
+        setItem: jest.fn(),
+        getItem: jest.fn(),
+        removeItem: jest.fn(),
+        clear: jest.fn()
+      },
+      configurable: true
+    });
+
+    const result = await registerUser({
+      name: 'Test',
+      email: 'test@example.com',
+      password: '1234'
+    })(dispatch, getState, undefined);
+
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      'accessToken',
+      'testtoken'
+    );
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      'refreshToken',
+      'refreshtoken'
+    );
+    expect(setCookie).toHaveBeenCalledWith('accessToken', 'testtoken');
+    expect(result.payload).toEqual(mockUser);
+    expect(result.type).toBe('auth/registerUser/fulfilled');
+  });
+  it('registerUser fallback error message', async () => {
+    const registerUserApiMock =
+      require('../../utils/burger-api').registerUserApi;
+    registerUserApiMock.mockRejectedValue({});
+
+    const result = await registerUser({
+      name: 'Fail',
+      email: 'fail@example.com',
+      password: '1234'
+    })(dispatch, getState, undefined);
+
+    expect(result.payload).toBe('Ошибка регистрации');
+    expect(result.type).toBe('auth/registerUser/rejected');
+  });
 });
 
 describe('authSlice reducers', () => {
   const initialState = {
     user: null,
-    isAuthChecked: false
+    isAuthChecked: false,
+    error: null
   };
 
   it('setUser sets user and auth checked', () => {
@@ -93,7 +247,8 @@ describe('authSlice reducers', () => {
   it('clearUser resets user and auth check', () => {
     const filledState = {
       user: mockUser,
-      isAuthChecked: true
+      isAuthChecked: true,
+      error: null
     };
     const newState = authReducer(filledState, clearUser());
     expect(newState.user).toBe(null);

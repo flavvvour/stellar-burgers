@@ -4,15 +4,19 @@ import { getUserApi, loginUserApi } from '../../utils/burger-api';
 import { setCookie } from '../../utils/cookie';
 import { logoutApi } from '../../utils/burger-api';
 import { deleteCookie } from '../../utils/cookie';
+import { TRegisterData } from '@utils-types';
+import { registerUserApi } from '../../utils/burger-api';
 
 type TAuthState = {
   user: TUser | null;
   isAuthChecked: boolean;
+  error: string | null;
 };
 
 const initialState: TAuthState = {
   user: null,
-  isAuthChecked: false
+  isAuthChecked: false,
+  error: null
 };
 
 export const checkAuth = createAsyncThunk(
@@ -44,6 +48,28 @@ export const loginUser = createAsyncThunk(
       return res.user;
     } catch (e: any) {
       return thunkAPI.rejectWithValue(e.message || 'Ошибка авторизации');
+    }
+  }
+);
+
+export const registerUser = createAsyncThunk(
+  'auth/registerUser',
+  async (data: TRegisterData, thunkAPI) => {
+    try {
+      const res = await registerUserApi(data);
+
+      const rawToken = res.accessToken;
+      const token = rawToken.startsWith('Bearer ')
+        ? rawToken.slice(7)
+        : rawToken;
+
+      localStorage.setItem('accessToken', token);
+      setCookie('accessToken', token);
+      localStorage.setItem('refreshToken', res.refreshToken);
+
+      return res.user;
+    } catch (e: any) {
+      return thunkAPI.rejectWithValue(e.message || 'Ошибка регистрации');
     }
   }
 );
@@ -92,14 +118,29 @@ const authSlice = createSlice({
         state.user = action.payload;
         state.isAuthChecked = true;
       })
-      .addCase(loginUser.rejected, (state) => {
+      .addCase(loginUser.rejected, (state, action) => {
         state.user = null;
         state.isAuthChecked = true;
+        state.error = action.payload as string;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.user = action.payload;
+        state.isAuthChecked = true;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.user = null;
+        state.isAuthChecked = true;
+        state.error = action.payload as string;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null;
+        state.isAuthChecked = true;
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.user = null;
+        state.isAuthChecked = true;
+        state.error = action.payload as string;
       });
-    builder.addCase(logoutUser.fulfilled, (state) => {
-      state.user = null;
-      state.isAuthChecked = true;
-    });
   }
 });
 
