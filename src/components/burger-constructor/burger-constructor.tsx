@@ -7,6 +7,11 @@ import { TIngredient } from '@utils-types';
 import { clearOrder } from '../../services/slices/orderSlice';
 import { clearConstructor } from '../../services/slices/constructorBurgerSlice';
 import { TConstructorIngredient } from '@utils-types';
+import { useDrop } from 'react-dnd';
+import {
+  addBun,
+  addIngredient
+} from '../../services/slices/constructorBurgerSlice';
 
 export const BurgerConstructor: FC = () => {
   const constructorItems = useAppSelector((state) => state.constructorBurger);
@@ -16,6 +21,22 @@ export const BurgerConstructor: FC = () => {
 
   const orderRequest = useAppSelector((state) => state.order.loading);
   const orderModalData = useAppSelector((state) => state.order.currentOrder);
+
+  const [, dropRef] = useDrop<TIngredient>({
+    accept: ['bun', 'ingredient'],
+    drop(item) {
+      if (!item || !item._id || !item.name || !item.type) {
+        console.warn('Некорректный drag-n-drop ингредиент', item);
+        return;
+      }
+
+      if (item.type === 'bun') {
+        dispatch(addBun(item));
+      } else {
+        dispatch(addIngredient(item));
+      }
+    }
+  });
 
   const handleOrderClick = async () => {
     if (!user) {
@@ -47,31 +68,36 @@ export const BurgerConstructor: FC = () => {
   const price = useMemo(
     () =>
       (constructorItems.bun ? constructorItems.bun.price * 2 : 0) +
-      constructorItems.ingredients.reduce((s, v) => s + v.price, 0),
+      constructorItems.ingredients.reduce(
+        (sum, item) => sum + (item?.price ?? 0),
+        0
+      ),
     [constructorItems]
   );
 
   return (
-    <BurgerConstructorUI
-      price={price}
-      orderRequest={orderRequest}
-      orderModalData={orderModalData}
-      onOrderClick={handleOrderClick}
-      closeOrderModal={closeOrderModal}
-      constructorItems={{
-        bun: constructorItemsTyped.bun
-          ? {
-              ...constructorItemsTyped.bun,
-              id: constructorItemsTyped.bun.id ?? '',
-              uniqueId: constructorItemsTyped.bun.uniqueId ?? ''
-            }
-          : null,
-        ingredients: constructorItemsTyped.ingredients.map((item) => ({
-          ...item,
-          id: item.id ?? '',
-          uniqueId: item.uniqueId ?? ''
-        }))
-      }}
-    />
+    <div ref={dropRef} data-testid='constructor-main-ingredients'>
+      <BurgerConstructorUI
+        price={price}
+        orderRequest={orderRequest}
+        orderModalData={orderModalData}
+        onOrderClick={handleOrderClick}
+        closeOrderModal={closeOrderModal}
+        constructorItems={{
+          bun: constructorItemsTyped.bun
+            ? {
+                ...constructorItemsTyped.bun,
+                id: constructorItemsTyped.bun.id ?? '',
+                uniqueId: constructorItemsTyped.bun.uniqueId ?? ''
+              }
+            : null,
+          ingredients: constructorItemsTyped.ingredients.map((item) => ({
+            ...item,
+            id: item.id ?? '',
+            uniqueId: item.uniqueId ?? ''
+          }))
+        }}
+      />
+    </div>
   );
 };

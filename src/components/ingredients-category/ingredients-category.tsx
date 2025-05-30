@@ -5,7 +5,7 @@ import {
   addIngredient
 } from '../../services/slices/constructorBurgerSlice';
 import { TIngredientsCategoryProps } from './type';
-import { TIngredient } from '@utils-types';
+import { TIngredient, TConstructorIngredient } from '@utils-types';
 import { IngredientsCategoryUI } from '../ui/ingredients-category';
 
 export const IngredientsCategory = forwardRef<
@@ -19,10 +19,16 @@ export const IngredientsCategory = forwardRef<
     const { bun, ingredients } = burgerConstructor;
     const counters: { [key: string]: number } = {};
 
-    ingredients.forEach((ingredient: TIngredient) => {
-      if (!counters[ingredient._id]) counters[ingredient._id] = 0;
-      counters[ingredient._id]++;
-    });
+    ingredients
+      .filter(
+        (ingredient): ingredient is TConstructorIngredient =>
+          !!ingredient && !!ingredient._id
+      )
+
+      .forEach((ingredient) => {
+        if (!counters[ingredient._id]) counters[ingredient._id] = 0;
+        counters[ingredient._id]++;
+      });
 
     if (bun?._id) counters[bun._id] = 2;
 

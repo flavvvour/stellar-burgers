@@ -1,8 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { nanoid } from 'nanoid';
 import { TConstructorIngredient, TIngredient } from '@utils-types';
 
 type ConstructorState = {
-  bun: TIngredient | null;
+  bun: TConstructorIngredient | null;
   ingredients: TConstructorIngredient[];
 };
 
@@ -16,33 +17,60 @@ const constructorSlice = createSlice({
   initialState,
   reducers: {
     addBun: (state, action: PayloadAction<TIngredient>) => {
-      state.bun = action.payload;
-    },
-    addIngredient: (state, action: PayloadAction<TIngredient>) => {
-      state.ingredients.push({
+      const bunWithIds: TConstructorIngredient = {
         ...action.payload,
-        id: crypto.randomUUID?.() || String(Date.now()),
-        uniqueId: crypto.randomUUID?.() || String(Date.now())
-      });
+        id: nanoid(),
+        uniqueId: nanoid()
+      };
+      state.bun = bunWithIds;
+    },
+
+    addIngredient: (state, action: PayloadAction<TIngredient>) => {
+      const ingredient = action.payload;
+
+      if (!ingredient || !ingredient._id || !ingredient.name) {
+        console.warn('Некорректный ингредиент:', ingredient);
+        return;
+      }
+
+      const enriched: TConstructorIngredient = {
+        ...ingredient,
+        id: nanoid(),
+        uniqueId: nanoid()
+      };
+
+      state.ingredients.push(enriched);
     },
     removeIngredient: (state, action: PayloadAction<string>) => {
       state.ingredients = state.ingredients.filter(
-        (item) => item.id !== action.payload
+        (item) => item.uniqueId !== action.payload
       );
     },
+
     clearConstructor: (state) => {
       state.bun = null;
       state.ingredients = [];
     },
+
     moveIngredient: (
       state,
       action: PayloadAction<{ fromIndex: number; toIndex: number }>
     ) => {
       const { fromIndex, toIndex } = action.payload;
-      const items = [...state.ingredients];
-      const [movedItem] = items.splice(fromIndex, 1);
-      items.splice(toIndex, 0, movedItem);
-      state.ingredients = items;
+
+      if (
+        fromIndex === toIndex ||
+        fromIndex < 0 ||
+        toIndex < 0 ||
+        fromIndex >= state.ingredients.length ||
+        toIndex >= state.ingredients.length
+      ) {
+        return;
+      }
+
+      const draggedItem = state.ingredients[fromIndex];
+      state.ingredients.splice(fromIndex, 1);
+      state.ingredients.splice(toIndex, 0, draggedItem);
     }
   }
 });

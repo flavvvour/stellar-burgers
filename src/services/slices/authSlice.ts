@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { TUser } from '../../utils/types';
 import { getUserApi, loginUserApi } from '../../utils/burger-api';
-import { setCookie } from '../../utils/cookie';
+import { setCookie, getCookie } from '../../utils/cookie';
 import { logoutApi } from '../../utils/burger-api';
 import { deleteCookie } from '../../utils/cookie';
 import { TRegisterData } from '@utils-types';
@@ -22,6 +22,11 @@ const initialState: TAuthState = {
 export const checkAuth = createAsyncThunk(
   'auth/checkAuth',
   async (_, thunkAPI) => {
+    const accessToken = getCookie('accessToken');
+    if (!accessToken) {
+      return thunkAPI.rejectWithValue('No token');
+    }
+
     try {
       const res = await getUserApi();
       return res.user;
@@ -30,6 +35,7 @@ export const checkAuth = createAsyncThunk(
     }
   }
 );
+
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (data: { email: string; password: string }, thunkAPI) => {
@@ -110,10 +116,15 @@ const authSlice = createSlice({
         state.user = action.payload;
         state.isAuthChecked = true;
       })
-      .addCase(checkAuth.rejected, (state) => {
+      .addCase(checkAuth.rejected, (state, action) => {
         state.user = null;
         state.isAuthChecked = true;
+
+        if (action.payload !== 'No token') {
+          state.error = action.payload as string;
+        }
       })
+
       .addCase(loginUser.fulfilled, (state, action) => {
         state.user = action.payload;
         state.isAuthChecked = true;

@@ -8,6 +8,7 @@ import {
 
 import { BurgerIngredientUI } from '@ui';
 import { TBurgerIngredientProps } from './type';
+import { useDrag } from 'react-dnd';
 
 export const BurgerIngredient: FC<TBurgerIngredientProps> = memo(
   ({ ingredient, count }) => {
@@ -22,13 +23,20 @@ export const BurgerIngredient: FC<TBurgerIngredientProps> = memo(
       }
     };
 
+    const [, dragRef] = useDrag({
+      type: ingredient.type === 'bun' ? 'bun' : 'ingredient',
+      item: ingredient
+    });
+
     return (
-      <BurgerIngredientUI
-        ingredient={ingredient}
-        count={count}
-        backgroundLocation={location}
-        handleAdd={handleAdd}
-      />
+      <div ref={dragRef}>
+        <BurgerIngredientUI
+          ingredient={ingredient}
+          count={count}
+          backgroundLocation={location}
+          handleAdd={handleAdd}
+        />
+      </div>
     );
   }
 );

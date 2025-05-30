@@ -18,7 +18,8 @@ const SELECTORS = {
   MODAL: '[data-testid="modal"]',
   MODAL_CLOSE: '[data-testid="modal-close"]',
   FILLING_ITEM: '[data-testid="constructor-ingredient"]',
-  EMPTY: '[data-testid="empty-constructor"]'
+  EMPTY: '[data-testid="empty-constructor"]',
+  CONSTRUCTOR_AREA: '[data-testid="constructor-main-ingredients"]'
 } as const;
 
 const clickToAdd = (label: string) => {
@@ -31,6 +32,8 @@ const moveIngredient = (from: number, to: number) => {
 };
 
 beforeEach(() => {
+  cy.setCookie('refreshToken', 'mock.refresh.token');
+
   cy.intercept('GET', '**/api/auth/user', { fixture: 'user.json' }).as(
     'getUser'
   );
@@ -42,7 +45,7 @@ beforeEach(() => {
   );
 
   cy.visit('/');
-  cy.wait(['@getUser', '@getIngredients']);
+  cy.wait('@getIngredients');
 });
 
 afterEach(() => {
@@ -61,7 +64,6 @@ describe('Сборка и оформление бургера', () => {
     it('добавляет начинку через кнопку', () => {
       cy.get(SELECTORS.MAIN_AREA).should('contain', 'Выберите начинку');
       clickToAdd(LABELS.FILLING);
-
       cy.get(SELECTORS.FILLING_ITEM)
         .should('have.length.at.least', 1)
         .and('contain', LABELS.FILLING);
@@ -70,7 +72,6 @@ describe('Сборка и оформление бургера', () => {
     it('добавляет булку через кнопку', () => {
       cy.get(SELECTORS.BUN_TOP).should('contain', 'Выберите булки');
       clickToAdd(LABELS.BREAD);
-
       cy.get(SELECTORS.BUN_TOP).should('contain', `${LABELS.BREAD} (верх)`);
       cy.get(SELECTORS.BUN_BOTTOM).should('contain', `${LABELS.BREAD} (низ)`);
     });
@@ -78,10 +79,21 @@ describe('Сборка и оформление бургера', () => {
     it('перетаскивает начинку внутри конструктора', () => {
       clickToAdd(LABELS.FILLING);
       clickToAdd(LABELS.FILLING);
-
       cy.get(SELECTORS.FILLING_ITEM).should('have.length.at.least', 2);
       moveIngredient(1, 0);
       cy.get(SELECTORS.FILLING_ITEM).eq(0).should('contain', LABELS.FILLING);
+    });
+
+    it('добавляет ингредиенты через drag-and-drop', () => {
+      cy.get(SELECTORS.ITEM)
+        .contains(LABELS.BREAD)
+        .trigger('dragstart', { force: true });
+
+      cy.get(SELECTORS.CONSTRUCTOR_AREA)
+        .first()
+        .trigger('drop', { force: true });
+
+      cy.get(SELECTORS.BUN_TOP).should('contain', LABELS.BREAD);
     });
   });
 
@@ -121,27 +133,46 @@ describe('Сборка и оформление бургера', () => {
       cy.get(SELECTORS.MODAL).should('not.exist');
     });
   });
+});
 
-  context('Оформление заказа', () => {
-    beforeEach(() => {
-      window.localStorage.setItem('accessToken', 'mock.access.token');
-      cy.setCookie('refreshToken', 'mock.refresh.token');
-    });
+describe('Регистрация пользователя и оформление заказа', () => {
+  it('успешно регистрирует нового пользователя и оформляет заказ', () => {
+    const email = `test-${Date.now()}@example.com`;
+    const password = '123456';
 
-    it('создаёт заказ и очищает содержимое конструктора', () => {
-      clickToAdd(LABELS.BREAD);
-      clickToAdd(LABELS.FILLING);
+    cy.intercept('POST', '**/api/orders', { fixture: 'order.json' }).as(
+      'createOrder'
+    );
+    cy.intercept('GET', '**/api/ingredients', {
+      fixture: 'ingredients.json'
+    }).as('getIngredients');
+    cy.intercept('GET', '**/api/auth/user', { fixture: 'user.json' }).as(
+      'getUser'
+    );
 
-      cy.contains('button', 'Оформить заказ').click();
-      cy.wait('@createOrder');
+    cy.visit('/register');
+    cy.get('input[name="name"]').type('Test User');
+    cy.get('input[name="email"]').type(email);
+    cy.get('input[name="password"]').type(password);
+    cy.contains('button', 'Зарегистрироваться').click();
+    cy.url().should('not.include', '/register');
 
-      cy.get(SELECTORS.MODAL).should('contain', '79456');
-      cy.get(SELECTORS.MODAL_CLOSE).click();
-      cy.get(SELECTORS.MODAL).should('not.exist');
+    cy.visit('/');
+    cy.wait('@getUser');
+    cy.wait('@getIngredients');
 
-      cy.get(SELECTORS.BUN_TOP).should('contain', 'Выберите булки');
-      cy.get(SELECTORS.BUN_BOTTOM).should('contain', 'Выберите булки');
-      cy.get(SELECTORS.EMPTY).should('exist');
-    });
+    clickToAdd(LABELS.BREAD);
+    clickToAdd(LABELS.FILLING);
+
+    cy.contains('button', 'Оформить заказ').click();
+    cy.wait('@createOrder');
+
+    cy.get(SELECTORS.MODAL).should('contain', '79456');
+    cy.get(SELECTORS.MODAL_CLOSE).click();
+    cy.get(SELECTORS.MODAL).should('not.exist');
+
+    cy.get(SELECTORS.BUN_TOP).should('contain', 'Выберите булки');
+    cy.get(SELECTORS.BUN_BOTTOM).should('contain', 'Выберите булки');
+    cy.get(SELECTORS.EMPTY).should('exist');
   });
 });

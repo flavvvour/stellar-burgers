@@ -13,23 +13,20 @@ export const BurgerConstructorElement: FC<BurgerConstructorElementProps> = memo(
     const dispatch = useAppDispatch();
     const ref = useRef<HTMLLIElement>(null);
 
-    // DnD: элемент можно тянуть
     const [, dragRef] = useDrag({
       type: 'ingredient',
       item: { index }
     });
 
-    // DnD: элемент можно принять как цель
     const [, dropRef] = useDrop({
       accept: 'ingredient',
       hover(item: { index: number }) {
         if (item.index === index) return;
         dispatch(moveIngredient({ fromIndex: item.index, toIndex: index }));
-        item.index = index; // Обновляем индекс текущего item-а
       }
     });
 
-    dragRef(dropRef(ref)); // Комбинируем drag + drop
+    dragRef(dropRef(ref));
 
     const handleMoveUp = () => {
       if (index > 0) {
@@ -44,7 +41,11 @@ export const BurgerConstructorElement: FC<BurgerConstructorElementProps> = memo(
     };
 
     const handleClose = () => {
-      dispatch(removeIngredient(ingredient.id));
+      if (ingredient?.uniqueId) {
+        dispatch(removeIngredient(ingredient.uniqueId));
+      } else {
+        console.warn('Попытка удалить ингредиент без uniqueId', ingredient);
+      }
     };
 
     return (

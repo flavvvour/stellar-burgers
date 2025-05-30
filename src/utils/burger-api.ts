@@ -182,8 +182,17 @@ export const registerUserApi = (data: TRegisterData) =>
   })
     .then((res) => checkResponse<TAuthResponse>(res))
     .then((data) => {
-      if (data?.success) return data;
-      return Promise.reject(data);
+      if (!data.success) return Promise.reject(data);
+
+      localStorage.setItem('refreshToken', data.refreshToken);
+
+      const tokenToSave = data.accessToken.startsWith('Bearer ')
+        ? data.accessToken.substring(7)
+        : data.accessToken;
+
+      setCookie('accessToken', tokenToSave);
+
+      return data;
     });
 
 export type TLoginData = {
@@ -201,8 +210,17 @@ export const loginUserApi = (data: TLoginData) =>
   })
     .then((res) => checkResponse<TAuthResponse>(res))
     .then((data) => {
-      if (data?.success) return data;
-      return Promise.reject(data);
+      if (!data.success) return Promise.reject(data);
+
+      localStorage.setItem('refreshToken', data.refreshToken);
+
+      const tokenToSave = data.accessToken.startsWith('Bearer ')
+        ? data.accessToken.substring(7)
+        : data.accessToken;
+
+      setCookie('accessToken', tokenToSave);
+
+      return data;
     });
 
 export const forgotPasswordApi = (data: { email: string }) =>
@@ -237,10 +255,12 @@ export type TUserResponse = TServerResponse<{ user: TUser }>;
 
 export const getUserApi = async (): Promise<TUserResponse> => {
   const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
     ...getAuthHeaders()
   };
-
+  console.log('[getUserApi] Headers:', headers);
   const data = await fetchWithRefresh<TUserResponse>(`${URL}/auth/user`, {
+    method: 'GET',
     headers
   });
 

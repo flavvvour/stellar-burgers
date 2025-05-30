@@ -16,7 +16,6 @@ import {
 } from '@pages';
 
 import { AppHeader, OrderInfo, Modal, IngredientDetails } from '@components';
-
 import { ProtectedRoute } from '../protected-route';
 
 const App = () => {
@@ -84,6 +83,7 @@ const App = () => {
         />
         <Route path='*' element={<NotFound404 />} />
       </Routes>
+
       {state?.backgroundLocation && (
         <Routes>
           <Route

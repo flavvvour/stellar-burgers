@@ -14,6 +14,13 @@ import authReducer, {
   setAuthChecked
 } from '../slices/authSlice';
 
+import { getCookie } from '../../utils/cookie';
+jest.mock('../../utils/cookie');
+
+beforeEach(() => {
+  (getCookie as jest.Mock).mockClear();
+});
+
 jest.mock('../../utils/burger-api');
 jest.mock('../../utils/cookie');
 
@@ -291,6 +298,7 @@ describe('authSlice thunks', () => {
   });
 
   it('checkAuth success', async () => {
+    (getCookie as jest.Mock).mockReturnValue('test-token');
     (getUserApi as jest.Mock).mockResolvedValue({ user: mockUser });
 
     const result = await checkAuth()(dispatch, getState, undefined);
@@ -300,11 +308,20 @@ describe('authSlice thunks', () => {
   });
 
   it('checkAuth failure', async () => {
+    (getCookie as jest.Mock).mockReturnValue('test-token');
     (getUserApi as jest.Mock).mockRejectedValue(new Error('fail'));
 
     const result = await checkAuth()(dispatch, getState, undefined);
 
     expect(result.payload).toBe(null);
+    expect(result.type).toBe('auth/checkAuth/rejected');
+  });
+  it('checkAuth without token', async () => {
+    (getCookie as jest.Mock).mockReturnValue(undefined);
+
+    const result = await checkAuth()(dispatch, getState, undefined);
+
+    expect(result.payload).toBe('No token');
     expect(result.type).toBe('auth/checkAuth/rejected');
   });
 

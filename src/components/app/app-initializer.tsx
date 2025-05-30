@@ -1,15 +1,19 @@
 import { useEffect } from 'react';
-import { useAppDispatch } from '../../services/store';
+import { useAppDispatch, useAppSelector } from '../../services/store';
 import { checkAuth } from '../../services/slices/authSlice';
 import App from './app';
 
 const AppInitializer = () => {
   const dispatch = useAppDispatch();
+  const isAuthChecked = useAppSelector((state) => state.auth.isAuthChecked);
 
   useEffect(() => {
-    console.log('AppInitializer: dispatch checkAuth');
     dispatch(checkAuth());
   }, [dispatch]);
+
+  if (!isAuthChecked) {
+    return null;
+  }
 
   return <App />;
 };
